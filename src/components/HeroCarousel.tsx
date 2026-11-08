@@ -1,58 +1,110 @@
 'use client'
 import useEmblaCarousel from 'embla-carousel-react'
 import Autoplay from 'embla-carousel-autoplay'
-import { useRef } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function HeroCarousel() {
-  // Slow transition (delay: 5000ms) for that premium "breath" feel
-  const autoplay = useRef(Autoplay({ delay: 5000, stopOnInteraction: false }))
-  const [emblaRef] = useEmblaCarousel({ loop: true, duration: 40 }, [autoplay.current])
+  // Slower transition (delay: 7000ms) and smooth glide
+  const autoplay = useRef(Autoplay({ delay: 7000, stopOnInteraction: false }))
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, duration: 80 }, [autoplay.current])
+  const [selectedIndex, setSelectedIndex] = useState(0)
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return
+    setSelectedIndex(emblaApi.selectedScrollSnap())
+  }, [emblaApi])
+
+  useEffect(() => {
+    if (!emblaApi) return
+    onSelect()
+    emblaApi.on('select', onSelect)
+    emblaApi.on('reInit', onSelect)
+  }, [emblaApi, onSelect])
 
   const slides = [
     {
-      title: "Christmas Sale",
-      subtitle: "Up to 40% OFF. Ends Jan 15th.",
-      desc: "Pharmaceuticals, Cosmetics & Provisions.",
-      gradient: "from-[#1e1b4b] via-[#312e81] to-[#4338ca]", // Deep luxury indigo
-      accent: "text-yellow-400"
+      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1200&auto=format&fit=crop',
+      subtitle: '100% Genuine Medications',
+      title: 'Your Health,\nDelivered.',
+      desc: 'Fast, secure, and reliable to your doorstep.'
     },
     {
-      title: "Your Health, Delivered.",
-      subtitle: "100% Genuine Medications",
-      desc: "Fast, secure, and reliable to your doorstep.",
-      gradient: "from-[#0f172a] via-[#0369a1] to-[#0284c7]", // Clean medical blue
-      accent: "text-blue-200"
+      image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1200&auto=format&fit=crop',
+      subtitle: 'Fresh & Daily',
+      title: 'Provisions for\nYour Family.',
+      desc: 'Everything you need, exactly when you need it.'
     },
     {
-      title: "Daily Essentials",
-      subtitle: "Everything you need",
-      desc: "Provisions and cosmetics at unbeatable prices.",
-      gradient: "from-[#064e3b] via-[#047857] to-[#059669]", // Fresh emerald
-      accent: "text-emerald-200"
+      image: 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=1200&auto=format&fit=crop',
+      subtitle: 'Glow & Care',
+      title: 'Premium\nCosmetics.',
+      desc: 'Because you deserve to feel your absolute best.'
     }
   ]
 
   return (
-    <div className="overflow-hidden mx-5 mt-6 rounded-[2.5rem] shadow-2xl shadow-blue-900/20" ref={emblaRef}>
-      <div className="flex">
-        {slides.map((slide, index) => (
-          <div key={index} className="flex-[0_0_100%] min-w-0">
-            <div className={`bg-gradient-to-br ${slide.gradient} p-8 h-[240px] flex flex-col justify-center relative overflow-hidden`}>
-              {/* Decorative background elements */}
-              <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -ml-10 -mb-10"></div>
+    <div className="relative mx-5 mt-6 rounded-[2.5rem] shadow-2xl shadow-blue-900/20 overflow-hidden">
+      <div className="overflow-hidden" ref={emblaRef}>
+        <div className="flex">
+          {slides.map((slide, index) => (
+            <div key={index} className="flex-[0_0_100%] min-w-0 relative h-[280px]">
+              {/* Slow zooming background image */}
+              <div className="absolute inset-0 overflow-hidden">
+                <img 
+                  src={slide.image} 
+                  alt={slide.title} 
+                  className={`w-full h-full object-cover transition-transform duration-[10000ms] ease-linear ${selectedIndex === index ? 'scale-110' : 'scale-100'}`} 
+                />
+              </div>
+              {/* Gradient Overlay for readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
               
-              <h2 className={`text-sm font-black uppercase tracking-widest ${slide.accent} mb-1`}>
-                {slide.subtitle}
-              </h2>
-              <h1 className="text-4xl font-black text-white mb-2 leading-tight tracking-tight">
-                {slide.title}
-              </h1>
-              <p className="text-sm font-medium text-white/80 max-w-[200px]">
-                {slide.desc}
-              </p>
+              {/* Text Content with Framer Motion */}
+              <div className="absolute inset-0 p-8 flex flex-col justify-end">
+                <AnimatePresence mode="wait">
+                  {selectedIndex === index && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.8, staggerChildren: 0.1 }}
+                    >
+                      <motion.h2 
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+                        className="text-[11px] font-black uppercase tracking-widest text-blue-300 mb-2"
+                      >
+                        {slide.subtitle}
+                      </motion.h2>
+                      <motion.h1 
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                        className="text-4xl font-black text-white mb-2 leading-tight tracking-tight whitespace-pre-line"
+                      >
+                        {slide.title}
+                      </motion.h1>
+                      <motion.p 
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                        className="text-sm font-medium text-white/80 max-w-[250px]"
+                      >
+                        {slide.desc}
+                      </motion.p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
-          </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Micro-interaction: Dot Indicators */}
+      <div className="absolute bottom-4 right-6 flex gap-2 z-10">
+        {slides.map((_, index) => (
+          <button 
+            key={index} 
+            onClick={() => emblaApi?.scrollTo(index)}
+            className={`h-1.5 rounded-full transition-all duration-500 ${selectedIndex === index ? 'w-6 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/60'}`}
+          />
         ))}
       </div>
     </div>

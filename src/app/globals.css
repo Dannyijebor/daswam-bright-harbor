@@ -1,14 +1,16 @@
 @import "tailwindcss";
 
 body {
-  background-color: #f3f4f6;
+  background-color: #fafbfc;
+  -webkit-tap-highlight-color: transparent; /* Removes blue box on mobile tap */
+  scroll-behavior: smooth;
 }
 
-@keyframes marquee {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+/* Hide scrollbars but keep functionality */
+::-webkit-scrollbar {
+  display: none;
 }
-
-.animate-marquee {
-  animation: marquee 15s linear infinite;
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -4,6 +4,7 @@ import CategoryBar from '@/components/CategoryBar';
 import HeroCarousel from '@/components/HeroCarousel';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
+import Loading from './loading';
 
 async function Storefront({ searchParamsPromise }: { searchParamsPromise: Promise<{ category?: string }> }) {
   const searchParams = await searchParamsPromise;
@@ -16,7 +17,8 @@ async function Storefront({ searchParamsPromise }: { searchParamsPromise: Promis
   
   const { data: products, error } = await query;
 
-  if (error) return <div className="text-center p-10 text-red-600 font-bold">Error: {error.message}</div>;
+  // Fallback if network is slow but data is empty (shows empty state instead of crashing)
+  if (error) return <div className="text-center p-10 text-gray-500 font-medium">Please check your connection.</div>;
 
   const groupedProducts = products?.reduce((acc: any, product: any) => {
     const catName = product.categories?.name || 'Other Medications';
@@ -28,24 +30,11 @@ async function Storefront({ searchParamsPromise }: { searchParamsPromise: Promis
   return (
     <main className="min-h-screen bg-[#fafbfc] pb-24">
       <Header />
-      
-      {/* Animated Sale Ticker */}
-      <div className="bg-[#111827] text-white text-[11px] font-bold tracking-widest uppercase py-2 overflow-hidden whitespace-nowrap">
-        <div className="animate-marquee inline-block">
-          🎄 Christmas Sale: Up to 40% OFF Pharmaceuticals, Cosmetics & Provisions! Ends Jan 15th 🎄
-        </div>
-      </div>
-
       <CategoryBar categories={categories || []} />
-
       {!categoryId && <HeroCarousel />}
-
       {categoryId && products && products.length > 0 && (
-        <div className="mt-6">
-          <ProductCarousel title="Filtered Results" products={products} />
-        </div>
+        <div className="mt-6"><ProductCarousel title="Filtered Results" products={products} /></div>
       )}
-
       {!categoryId && groupedProducts && Object.keys(groupedProducts).length > 0 && (
         <div className="mt-2">
           {Object.entries(groupedProducts).map(([categoryName, catProducts]: [string, any]) => (
@@ -59,7 +48,7 @@ async function Storefront({ searchParamsPromise }: { searchParamsPromise: Promis
 
 export default function Home({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   return (
-    <Suspense fallback={<div className="p-10 text-center font-bold text-gray-500">Loading Store...</div>}>
+    <Suspense fallback={<Loading />}>
       <Storefront searchParamsPromise={searchParams} />
     </Suspense>
   );
