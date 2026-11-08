@@ -1,34 +1,22 @@
 'use client'
-import { useState } from 'react'
-import { Search, MapPin, ShoppingCart, User } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Search, MapPin, ShoppingCart, User, Sparkles } from 'lucide-react'
 import { motion, useAnimation } from 'framer-motion'
 import { useCart } from '@/context/CartContext'
 import CartDrawer from './CartDrawer'
-import { useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import SmartSearchModal from './SmartSearchModal'
 
 export default function Header() {
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const { cartCount } = useCart()
   const controls = useAnimation()
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [query, setQuery] = useState(searchParams.get('search') || '')
 
   useEffect(() => {
     if (cartCount > 0) {
       controls.start({ scale: [1, 1.3, 1], rotate: [0, -10, 10, 0], transition: { duration: 0.4 } })
     }
   }, [cartCount, controls])
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (query.trim()) {
-      router.push(`/?search=${encodeURIComponent(query)}`)
-    } else {
-      router.push('/')
-    }
-  }
 
   return (
     <>
@@ -50,23 +38,24 @@ export default function Header() {
           </div>
         </div>
         
-        <form onSubmit={handleSearch} className="flex items-center bg-white/10 backdrop-blur-lg border border-white/10 rounded-2xl overflow-hidden p-1">
-          <div className="pl-3 text-gray-400"><Search size={18} /></div>
-          <input 
-            type="text" 
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search medications, provisions..." 
-            className="flex-1 p-2 bg-transparent text-white placeholder-gray-400 outline-none text-sm" 
-          />
-        </form>
+        {/* The New Smart Search Trigger */}
+        <button 
+          onClick={() => setIsSearchOpen(true)}
+          className="w-full flex items-center bg-white/10 backdrop-blur-lg border border-white/10 rounded-2xl p-3 text-left hover:bg-white/20 transition-colors"
+        >
+          <Search size={18} className="text-blue-400 mr-3" />
+          <span className="text-gray-400 text-sm flex-1">Search symptoms or medications...</span>
+          <Sparkles size={16} className="text-yellow-400" />
+        </button>
 
         <div className="flex items-center gap-1 mt-3 text-xs font-medium text-gray-400">
           <MapPin size={14} className="text-blue-400" />
           <span>Deliver to Nigeria</span>
         </div>
       </div>
+      
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <SmartSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   )
 }
