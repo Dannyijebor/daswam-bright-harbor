@@ -3,17 +3,16 @@ import ProductCarousel from '@/components/ProductCarousel';
 import { Search, MapPin, ShoppingCart, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-// 1. Move the data fetching into its own component
 async function ProductList() {
   const { data: products, error } = await supabase.from('products').select('*');
 
   if (error) {
-    console.error('Error fetching products:', error);
-    return <div className="text-center p-10 text-red-500">Failed to load products.</div>;
+    // This will display the EXACT database error on the screen
+    return <div className="text-center p-10 text-red-600 font-bold">Database Error: {error.message}</div>;
   }
 
   if (!products || products.length === 0) {
-    return <div className="text-center p-10 text-gray-500">No products found. Check your database connection!</div>;
+    return <div className="text-center p-10 text-gray-500">No products found. Your table is empty!</div>;
   }
 
   return (
@@ -24,11 +23,9 @@ async function ProductList() {
   );
 }
 
-// 2. Your main page remains static and wraps the dynamic part in Suspense
 export default function Home() {
   return (
     <main className="min-h-screen bg-gray-100 pb-20">
-      {/* Header and Hero Banner are always visible */}
       <div className="bg-[#131921] text-white p-4">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold tracking-tight">DASWAM</h1>
@@ -54,7 +51,6 @@ export default function Home() {
         <p className="text-sm opacity-90">Get your pharmaceuticals and provisions delivered to your door.</p>
       </div>
 
-      {/* 3. Suspense boundary for the dynamic product list */}
       <Suspense fallback={<div className="text-center p-10 text-gray-500">Loading products...</div>}>
         <ProductList />
       </Suspense>
