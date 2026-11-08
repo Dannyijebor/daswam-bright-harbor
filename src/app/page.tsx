@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import ProductCarousel from '@/components/ProductCarousel';
 import CategoryBar from '@/components/CategoryBar';
+import HeroCarousel from '@/components/HeroCarousel';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 
@@ -27,16 +28,17 @@ async function Storefront({ searchParamsPromise }: { searchParamsPromise: Promis
   return (
     <main className="min-h-screen bg-[#fafbfc] pb-24">
       <Header />
+      
+      {/* Animated Sale Ticker */}
+      <div className="bg-[#111827] text-white text-[11px] font-bold tracking-widest uppercase py-2 overflow-hidden whitespace-nowrap">
+        <div className="animate-marquee inline-block">
+          🎄 Christmas Sale: Up to 40% OFF Pharmaceuticals, Cosmetics & Provisions! Ends Jan 15th 🎄
+        </div>
+      </div>
+
       <CategoryBar categories={categories || []} />
 
-      {!categoryId && (
-        <div className="bg-gradient-to-br from-indigo-900 via-blue-800 to-blue-600 p-8 mx-5 mt-6 rounded-[2.5rem] text-white shadow-2xl shadow-blue-900/20 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-400/20 rounded-full blur-2xl -ml-10 -mb-10"></div>
-          <h2 className="text-4xl font-black mb-3 relative z-10 leading-tight tracking-tight">Your Health,<br/>Delivered.</h2>
-          <p className="text-sm font-medium text-blue-100 relative z-10 max-w-[200px]">Genuine medications and daily essentials at your fingertips.</p>
-        </div>
-      )}
+      {!categoryId && <HeroCarousel />}
 
       {categoryId && products && products.length > 0 && (
         <div className="mt-6">
