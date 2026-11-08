@@ -4,14 +4,16 @@ import CategoryBar from '@/components/CategoryBar';
 import { Search, MapPin, ShoppingCart, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-async function Storefront({ searchParams }: { searchParams: { category?: string } }) {
-  // Fetch categories
+// 1. Accept searchParams as a Promise
+async function Storefront({ searchParamsPromise }: { searchParamsPromise: Promise<{ category?: string }> }) {
+  const searchParams = await searchParamsPromise;
+  const categoryId = searchParams?.category;
+
   const { data: categories } = await supabase.from('categories').select('*');
   
-  // Fetch products (filtered by category if one is selected)
   let query = supabase.from('products').select('*, categories(name)');
-  if (searchParams.category) {
-    query = query.eq('category_id', searchParams.category);
+  if (categoryId) {
+    query = query.eq('category_id', categoryId);
   }
   const { data: products, error } = await query;
 
@@ -21,7 +23,6 @@ async function Storefront({ searchParams }: { searchParams: { category?: string 
 
   return (
     <>
-      {/* Sticky Header */}
       <div className="bg-[#131921] text-white p-4 sticky top-0 z-50">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold tracking-tight text-white">DASWAM</h1>
@@ -53,7 +54,7 @@ async function Storefront({ searchParams }: { searchParams: { category?: string 
 
       <div className="mt-6">
         {products && products.length > 0 ? (
-          <ProductCarousel title={searchParams.category ? 'Filtered Results' : 'All Medications'} products={products} />
+          <ProductCarousel title={categoryId ? 'Filtered Results' : 'All Medications'} products={products} />
         ) : (
           <div className="text-center p-10 text-gray-500">No products found in this category.</div>
         )}
@@ -62,11 +63,12 @@ async function Storefront({ searchParams }: { searchParams: { category?: string 
   );
 }
 
-export default function Home({ searchParams }: { searchParams: { category?: string } }) {
+// 2. Pass the Promise down to the async component
+export default function Home({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
-      <Suspense fallback={<div className="p-10 text-center">Loading Store...</div>}>
-        <Storefront searchParams={searchParams} />
+      <Suspense fallback={<div className="p-10 text-center font-bold text-gray-500">Loading Store...</div>}>
+        <Storefront searchParamsPromise={searchParams} />
       </Suspense>
     </main>
   );
