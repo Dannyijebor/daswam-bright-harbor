@@ -1,13 +1,14 @@
 'use client'
 import { createContext, useContext, useState, useEffect } from 'react'
 
-type Product = { id: string; name: string; price: number; image_url: string }
+type Product = { id: string; name: string; price: number; image_url: string, is_prescription_required?: boolean }
 type CartItem = Product & { quantity: number }
 
 type CartContextType = {
   cart: CartItem[]
   addToCart: (product: Product) => void
   removeFromCart: (id: string) => void
+  clearCart: () => void
   cartTotal: number
   cartCount: number
 }
@@ -18,14 +19,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
 
-  // Load cart from local storage on first render
   useEffect(() => {
     const saved = localStorage.getItem('daswam_cart')
     if (saved) setCart(JSON.parse(saved))
     setIsLoaded(true)
   }, [])
 
-  // Save to local storage when cart changes
   useEffect(() => {
     if (isLoaded) localStorage.setItem('daswam_cart', JSON.stringify(cart))
   }, [cart, isLoaded])
@@ -44,11 +43,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCart((prev) => prev.filter((item) => item.id !== id))
   }
 
+  const clearCart = () => setCart([])
+
   const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0)
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, cartTotal, cartCount }}>
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, cartTotal, cartCount }}>
       {children}
     </CartContext.Provider>
   )

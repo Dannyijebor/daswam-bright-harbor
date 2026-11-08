@@ -2,21 +2,26 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCart } from '@/context/CartContext'
 import { X, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const { cart, removeFromCart, cartTotal } = useCart()
+  const router = useRouter()
+
+  const handleCheckout = () => {
+    onClose() // Close drawer
+    router.push('/checkout') // Go to checkout page
+  }
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Dark Overlay */}
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90]"
           />
-          {/* Sliding Drawer */}
           <motion.div 
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
@@ -53,7 +58,11 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
                 <span className="font-bold text-gray-500">Total</span>
                 <span className="font-extrabold text-2xl text-gray-900">${cartTotal.toFixed(2)}</span>
               </div>
-              <button className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform">
+              <button 
+                onClick={handleCheckout}
+                disabled={cart.length === 0}
+                className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform disabled:opacity-50 disabled:active:scale-100"
+              >
                 Proceed to Checkout
               </button>
             </div>
