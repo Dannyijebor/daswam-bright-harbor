@@ -1,6 +1,6 @@
 'use client'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Heart, Check } from 'lucide-react'
+import { Plus, Heart, Check, Tag } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useState } from 'react'
 
@@ -9,9 +9,13 @@ export default function ProductCard({ product }: { product: any }) {
   const [addedId, setAddedId] = useState<string | null>(null)
   const [isWishlisted, setIsWishlisted] = useState(false)
 
+  const hasDiscount = product.discount_price !== null && product.discount_price > 0;
+  const finalPrice = hasDiscount ? product.discount_price : product.price;
+
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault()
-    addToCart(product)
+    // Add the discounted price to the cart
+    addToCart({ ...product, price: finalPrice })
     setAddedId(product.id)
     setTimeout(() => setAddedId(null), 1500)
   }
@@ -38,8 +42,15 @@ export default function ProductCard({ product }: { product: any }) {
           <Heart size={16} className={isWishlisted ? "fill-red-500 text-red-500" : ""} />
         </motion.button>
 
+        {/* Sale Badge */}
+        {hasDiscount && (
+          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-2 right-2 text-[10px] bg-green-500 text-white px-2.5 py-1 rounded-full font-black shadow-sm flex items-center gap-1">
+            <Tag size={10} /> SALE
+          </motion.span>
+        )}
+
         {product.is_prescription_required && (
-          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-2 right-2 text-[10px] bg-red-500 text-white px-2.5 py-1 rounded-full font-bold shadow-sm">
+          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute bottom-2 right-2 text-[10px] bg-red-500 text-white px-2.5 py-1 rounded-full font-bold shadow-sm">
             Rx
           </motion.span>
         )}
@@ -53,8 +64,12 @@ export default function ProductCard({ product }: { product: any }) {
           <h3 className="font-bold text-base text-gray-800 leading-tight mb-2 line-clamp-2">{product.name}</h3>
         </div>
         
-        <div className="flex justify-between items-center mt-4">
-          <p className="font-black text-xl text-gray-900">${product.price.toFixed(2)}</p>
+        <div className="flex justify-between items-end mt-4">
+          <div>
+            {hasDiscount && <p className="text-xs text-gray-400 line-through mb-0.5">${product.price.toFixed(2)}</p>}
+            <p className={`font-black text-xl ${hasDiscount ? 'text-green-600' : 'text-gray-900'}`}>${finalPrice.toFixed(2)}</p>
+          </div>
+
           <motion.button 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.85 }}
