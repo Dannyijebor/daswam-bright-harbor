@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import ProductCarousel from '@/components/ProductCarousel';
 import CategoryBar from '@/components/CategoryBar';
 import HeroCarousel from '@/components/HeroCarousel';
-import InterstitialBanner from '@/components/InterstitialBanner';
+import LifestyleCarousel from '@/components/LifestyleCarousel';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 import Loading from './loading';
@@ -32,6 +32,7 @@ async function Storefront({ searchParamsPromise }: { searchParamsPromise: Promis
     <main className="min-h-screen bg-[#fafbfc] pb-24">
       <Header />
       <CategoryBar categories={categories || []} />
+      
       {!categoryId && <HeroCarousel />}
 
       {!categoryId && (
@@ -48,32 +49,15 @@ async function Storefront({ searchParamsPromise }: { searchParamsPromise: Promis
 
       {!categoryId && groupedProducts && Object.keys(groupedProducts).length > 0 && (
         <div className="mt-2 flex flex-col">
-          {Object.entries(groupedProducts).map(([categoryName, catProducts]: [string, any], index) => {
-            return (
-              <div key={categoryName}>
-                <ProductCarousel title={categoryName} products={catProducts} />
-                
-                {index === 0 && (
-                  <InterstitialBanner 
-                    title="Refresh Your Day" 
-                    desc="Premium cosmetics and skincare essentials to keep you glowing."
-                    image="https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=800&auto=format&fit=crop"
-                    link="/shop"
-                    align="left"
-                  />
-                )}
-                {index === 2 && (
-                  <InterstitialBanner 
-                    title="Stock Up & Save" 
-                    desc="Provisions and daily groceries you need, delivered fast."
-                    image="https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=800&auto=format&fit=crop"
-                    link="/shop"
-                    align="right"
-                  />
-                )}
-              </div>
-            );
-          })}
+          {Object.entries(groupedProducts).map(([categoryName, catProducts]: [string, any]) => (
+            <div key={categoryName}>
+              {/* 1. Product Row */}
+              <ProductCarousel title={categoryName} products={catProducts} />
+              
+              {/* 2. Image Carousel immediately after every row */}
+              <LifestyleCarousel />
+            </div>
+          ))}
         </div>
       )}
     </main>
