@@ -2,11 +2,39 @@ import { Suspense } from 'react';
 import ProductCarousel from '@/components/ProductCarousel';
 import CategoryBar from '@/components/CategoryBar';
 import HeroCarousel from '@/components/HeroCarousel';
-import LifestyleCarousel from '@/components/LifestyleCarousel';
+import StaticBanner from '@/components/StaticBanner';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 import Loading from './loading';
 import Link from 'next/link';
+
+// Array of unique banners to cycle through
+const BANNERS = [
+  {
+    image: 'https://images.unsplash.com/photo-1512389142860-9c449e58a543?q=80&w=1200&auto=format&fit=crop',
+    title: 'The Christmas Mega Sale',
+    subtitle: 'Get up to 40% off pharmaceuticals, cosmetics, and provisions. Ends Jan 15th!',
+    isSale: true
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1200&auto=format&fit=crop',
+    title: 'Care for the Whole Family',
+    subtitle: 'Genuine medications and expert advice you can always trust.',
+    isSale: false
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1200&auto=format&fit=crop',
+    title: 'Freshness Delivered Daily',
+    subtitle: 'Stock up on healthy provisions and daily essentials at unbeatable prices.',
+    isSale: false
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1607083206968-13611e3d76db?q=80&w=1200&auto=format&fit=crop',
+    title: 'Give the Gift of Wellness',
+    subtitle: 'Premium cosmetics and supplements at 40% off for the holidays.',
+    isSale: true
+  }
+];
 
 async function Storefront({ searchParamsPromise }: { searchParamsPromise: Promise<{ category?: string }> }) {
   const searchParams = await searchParamsPromise;
@@ -49,15 +77,25 @@ async function Storefront({ searchParamsPromise }: { searchParamsPromise: Promis
 
       {!categoryId && groupedProducts && Object.keys(groupedProducts).length > 0 && (
         <div className="mt-2 flex flex-col">
-          {Object.entries(groupedProducts).map(([categoryName, catProducts]: [string, any]) => (
-            <div key={categoryName}>
-              {/* 1. Product Row */}
-              <ProductCarousel title={categoryName} products={catProducts} />
-              
-              {/* 2. Image Carousel immediately after every row */}
-              <LifestyleCarousel />
-            </div>
-          ))}
+          {Object.entries(groupedProducts).map(([categoryName, catProducts]: [string, any], index) => {
+            // This picks a different banner for each row, cycling through the 4 unique banners
+            const banner = BANNERS[index % BANNERS.length];
+
+            return (
+              <div key={categoryName}>
+                {/* 1. Product Row */}
+                <ProductCarousel title={categoryName} products={catProducts} />
+                
+                {/* 2. Unique Static Banner after every row */}
+                <StaticBanner 
+                  image={banner.image}
+                  title={banner.title}
+                  subtitle={banner.subtitle}
+                  isSale={banner.isSale}
+                />
+              </div>
+            );
+          })}
         </div>
       )}
     </main>
