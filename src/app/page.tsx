@@ -4,12 +4,11 @@ import CategoryBar from '@/components/CategoryBar';
 import { Search, MapPin, ShoppingCart, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-// 1. Accept searchParams as a Promise
 async function Storefront({ searchParamsPromise }: { searchParamsPromise: Promise<{ category?: string }> }) {
   const searchParams = await searchParamsPromise;
   const categoryId = searchParams?.category;
 
-  const { data: categories } = await supabase.from('categories').select('*');
+  const { data: categories } = await supabase.from('categories').select('*').order('name');
   
   let query = supabase.from('products').select('*, categories(name)');
   if (categoryId) {
@@ -20,6 +19,14 @@ async function Storefront({ searchParamsPromise }: { searchParamsPromise: Promis
   if (error) {
     return <div className="text-center p-10 text-red-600 font-bold">Error: {error.message}</div>;
   }
+
+  // Group products by category name for the "All Products" view
+  const groupedProducts = products?.reduce((acc: any, product: any) => {
+    const catName = product.categories?.name || 'Other Medications';
+    if (!acc[catName]) acc[catName] = [];
+    acc[catName].push(product);
+    return acc;
+  }, {});
 
   return (
     <>
@@ -47,23 +54,37 @@ async function Storefront({ searchParamsPromise }: { searchParamsPromise: Promis
 
       <CategoryBar categories={categories || []} />
 
-      <div className="bg-gradient-to-r from-blue-700 to-indigo-600 p-6 mx-4 mt-4 rounded-2xl text-white shadow-xl">
-        <h2 className="text-2xl font-extrabold mb-1">Pharmacy Essentials</h2>
-        <p className="text-sm opacity-90">Genuine medications delivered to your door.</p>
-      </div>
+      {!categoryId && (
+        <div className="bg-gradient-to-r from-blue-700 to-indigo-600 p-6 mx-4 mt-4 rounded-2xl text-white shadow-xl">
+          <h2 className="text-2xl font-extrabold mb-1">Pharmacy Essentials</h2>
+          <p className="text-sm opacity-90">Genuine medications delivered to your door.</p>
+        </div>
+      )}
 
-      <div className="mt-6">
-        {products && products.length > 0 ? (
-          <ProductCarousel title={categoryId ? 'Filtered Results' : 'All Medications'} products={products} />
-        ) : (
-          <div className="text-center p-10 text-gray-500">No products found in this category.</div>
-        )}
-      </div>
+      {/* If a specific category is selected, show one big list */}
+      {categoryId && products && products.length > 0 && (
+        <div className="mt-6">
+          <ProductCarousel title="Filtered Results" products={products} />
+        </div>
+      )}
+
+      {/* If "All Products" is selected, show multiple segmented rows */}
+      {!categoryId && groupedProducts && Object.keys(groupedProducts).length > 0 && (
+        <div className="mt-4 pb-10">
+          {Object.entries(groupedProducts).map(([categoryName, catProducts]: [string, any]) => (
+            <ProductCarousel key={categoryName} title={categoryName} products={catProducts} />
+          ))}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {(!products || products.length === 0) && (
+        <div className="text-center p-10 text-gray-500">No products found in this category.</div>
+      )}
     </>
   );
 }
 
-// 2. Pass the Promise down to the async component
 export default function Home({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
