@@ -5,18 +5,30 @@ import { motion, useAnimation } from 'framer-motion'
 import { useCart } from '@/context/CartContext'
 import CartDrawer from './CartDrawer'
 import { useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function Header() {
   const [isCartOpen, setIsCartOpen] = useState(false)
   const { cartCount } = useCart()
   const controls = useAnimation()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [query, setQuery] = useState(searchParams.get('search') || '')
 
-  // Bounce the cart icon when count changes
   useEffect(() => {
     if (cartCount > 0) {
       controls.start({ scale: [1, 1.3, 1], rotate: [0, -10, 10, 0], transition: { duration: 0.4 } })
     }
   }, [cartCount, controls])
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (query.trim()) {
+      router.push(`/?search=${encodeURIComponent(query)}`)
+    } else {
+      router.push('/')
+    }
+  }
 
   return (
     <>
@@ -25,7 +37,6 @@ export default function Header() {
           <h1 className="text-xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-white">DASWAM</h1>
           <div className="flex gap-4 items-center">
             <User size={22} className="text-gray-300" />
-            
             <button onClick={() => setIsCartOpen(true)} className="relative p-1">
               <motion.div animate={controls}>
                 <ShoppingCart size={24} className="text-white" />
@@ -39,17 +50,22 @@ export default function Header() {
           </div>
         </div>
         
-        <div className="flex items-center bg-white/10 backdrop-blur-lg border border-white/10 rounded-2xl overflow-hidden p-1">
+        <form onSubmit={handleSearch} className="flex items-center bg-white/10 backdrop-blur-lg border border-white/10 rounded-2xl overflow-hidden p-1">
           <div className="pl-3 text-gray-400"><Search size={18} /></div>
-          <input type="text" placeholder="Search medications..." className="flex-1 p-2 bg-transparent text-white placeholder-gray-400 outline-none text-sm" />
-        </div>
+          <input 
+            type="text" 
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search medications, provisions..." 
+            className="flex-1 p-2 bg-transparent text-white placeholder-gray-400 outline-none text-sm" 
+          />
+        </form>
 
         <div className="flex items-center gap-1 mt-3 text-xs font-medium text-gray-400">
           <MapPin size={14} className="text-blue-400" />
           <span>Deliver to Nigeria</span>
         </div>
       </div>
-
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   )
