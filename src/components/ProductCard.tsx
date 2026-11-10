@@ -66,8 +66,8 @@ export default function ProductCard({ product }: { product: any }) {
         
         <div className="flex justify-between items-end mt-4">
           <div>
-            {hasDiscount && <p className="text-xs text-gray-400 line-through mb-0.5">${product.price.toFixed(2)}</p>}
-            <p className={`font-black text-xl ${hasDiscount ? 'text-green-600' : 'text-gray-900'}`}>${finalPrice.toFixed(2)}</p>
+            {hasDiscount && <p className="text-xs text-gray-400 line-through mb-0.5">₦{product.price.toFixed(2)}</p>}
+            <p className={`font-black text-xl ${hasDiscount ? 'text-green-600' : 'text-gray-900'}`}>₦{finalPrice.toFixed(2)}</p>
           </div>
 
           <motion.button 

@@ -124,11 +124,11 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-gray-700 mb-1 block">Original Price ($)</label>
+                  <label className="text-xs font-bold text-gray-700 mb-1 block">Original Price (₦)</label>
                   <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl outline-none" placeholder="10.00" />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-700 mb-1 block">Discount ($) (Opt)</label>
+                  <label className="text-xs font-bold text-gray-700 mb-1 block">Discount (₦) (Opt)</label>
                   <input type="number" value={discountPrice} onChange={e => setDiscountPrice(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl outline-none" placeholder="8.00" />
                 </div>
               </div>

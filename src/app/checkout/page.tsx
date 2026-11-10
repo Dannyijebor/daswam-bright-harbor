@@ -158,15 +158,15 @@ export default function CheckoutPage() {
         <div className="max-w-2xl mx-auto">
           <div className="flex justify-between text-sm mb-2 text-gray-500">
             <span>Subtotal</span>
-            <span className="font-medium text-gray-800">${cartTotal.toFixed(2)}</span>
+            <span className="font-medium text-gray-800">₦{cartTotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm mb-4 text-gray-500">
             <span>Delivery Fee</span>
-            <span className="font-medium text-gray-800">{deliveryFee === 0 ? 'FREE' : `$${deliveryFee.toFixed(2)}`}</span>
+            <span className="font-medium text-gray-800">{deliveryFee === 0 ? 'FREE' : `$₦{deliveryFee.toFixed(2)}`}</span>
           </div>
           <div className="flex justify-between items-center mb-4 border-t pt-3">
             <span className="font-bold text-gray-900">Total</span>
-            <span className="font-black text-2xl text-blue-600">${finalTotal.toFixed(2)}</span>
+            <span className="font-black text-2xl text-blue-600">₦{finalTotal.toFixed(2)}</span>
           </div>
           <button 
             onClick={() => {

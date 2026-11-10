@@ -42,7 +42,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
                       <img src={item.image_url} className="w-16 h-16 rounded-xl object-cover" />
                       <div className="flex-1">
                         <p className="font-bold text-sm text-gray-800">{item.name}</p>
-                        <p className="text-blue-600 font-bold">${item.price.toFixed(2)} x {item.quantity}</p>
+                        <p className="text-blue-600 font-bold">₦{item.price.toFixed(2)} x {item.quantity}</p>
                       </div>
                       <button onClick={() => removeFromCart(item.id)} className="text-red-500 p-2">
                         <Trash2 size={20} />
@@ -56,7 +56,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
             <div className="p-5 border-t bg-white pb-10">
               <div className="flex justify-between items-center mb-4">
                 <span className="font-bold text-gray-500">Total</span>
-                <span className="font-extrabold text-2xl text-gray-900">${cartTotal.toFixed(2)}</span>
+                <span className="font-extrabold text-2xl text-gray-900">₦{cartTotal.toFixed(2)}</span>
               </div>
               <button 
                 onClick={handleCheckout}
