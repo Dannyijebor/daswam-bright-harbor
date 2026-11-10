@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     images: [
       {
         // A beautiful, neutral, modern store aisle image
-        url: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=1200&auto=format&fit=crop', 
+        url: '/icon.png', 
         width: 1200,
         height: 630,
         alt: 'DASWAM BRIGHT HARBOR - Your One-Stop Store',
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "DASWAM BRIGHT HARBOR | Your Daily Store",
     description: "Medications, Provisions, Cosmetics & More. Delivered fast to your doorstep.",
-    images: ['https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=1200&auto=format&fit=crop'],
+    images: ['/icon.png'],
   },
 };
 
