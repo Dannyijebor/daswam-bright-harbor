@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { PlusCircle, LogOut, Loader2, Pencil, Trash2, Tag, Layers, Image as ImageIcon, Package } from 'lucide-react'
+import { PlusCircle, LogOut, Loader2, Pencil, Trash2, Layers, Image as ImageIcon, Package, Search, ChevronDown, ChevronRight } from 'lucide-react'
 import AdminProductModal from '@/components/AdminProductModal'
 import AdminBannerModal from '@/components/AdminBannerModal'
 
@@ -14,6 +14,10 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
   
+  // Search & Grouping State
+  const [searchQuery, setSearchQuery] = useState('')
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({})
+
   // Modals
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<any>(null)
@@ -73,26 +77,17 @@ export default function AdminDashboard() {
     fetchData()
   }
 
-  // THE FIX IS HERE: Robust Category Adding
   const handleAddCategory = async () => {
     if (!newCatName.trim()) return alert('Please enter a category name')
-    
     setIsAddingCategory(true)
-    
-    // 1. Save to Database
-    const { error } = await supabase
-      .from('categories')
-      .insert({ name: newCatName.trim(), type: newCatType })
-    
+    const { error } = await supabase.from('categories').insert({ name: newCatName.trim(), type: newCatType })
     setIsAddingCategory(false)
-
-    // 2. Handle Result
     if (error) {
       alert("Database Error: " + error.message)
     } else {
       alert(`Success! "${newCatName}" has been added.`)
-      setNewCatName('') // Clear the input box
-      fetchData() // Instantly refresh the list and dropdowns
+      setNewCatName('')
+      fetchData()
     }
   }
 
@@ -107,6 +102,28 @@ export default function AdminDashboard() {
     await supabase.from('banners').delete().eq('id', id)
     fetchData()
   }
+
+  const toggleCategory = (catName: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [catName]: !prev[catName]
+    }))
+  }
+
+  // --- FILTERING AND GROUPING LOGIC ---
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (p.categories?.name || 'Uncategorized').toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const groupedInventory = filteredProducts.reduce((acc: Record<string, any[]>, product) => {
+    const catName = product.categories?.name || 'Uncategorized'
+    if (!acc[catName]) acc[catName] = []
+    acc[catName].push(product)
+    return acc
+  }, {})
+
+  const sortedCategoryNames = Object.keys(groupedInventory).sort()
 
   return (
     <main className="min-h-screen bg-[#f4f6f9] pb-24">
@@ -141,25 +158,80 @@ export default function AdminDashboard() {
             {/* INVENTORY TAB */}
             {activeTab === 'inventory' && (
               <div className="space-y-4">
-                <button onClick={() => { setEditingProduct(null); setIsProductModalOpen(true); }} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg flex justify-center gap-2">
-                  <PlusCircle size={20} /> Add New Product
-                </button>
-                <div className="bg-white rounded-3xl shadow-sm border overflow-hidden divide-y">
-                  {products.map(product => (
-                    <div key={product.id} className="p-4 flex items-center gap-4">
-                      <img src={product.image_url} className="w-16 h-16 rounded-xl object-cover border" />
-                      <div className="flex-1">
-                        <p className="font-bold text-sm">{product.name}</p>
-                        <p className="text-[10px] font-bold text-blue-600 uppercase">{product.categories?.name || 'Uncategorized'}</p>
-                        <p className="text-sm font-black mt-1">₦{product.price.toFixed(2)}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => { setEditingProduct(product); setIsProductModalOpen(true); }} className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Pencil size={18} /></button>
-                        <button onClick={() => handleDeleteProduct(product.id)} className="p-2 bg-red-50 text-red-600 rounded-lg"><Trash2 size={18} /></button>
-                      </div>
-                    </div>
-                  ))}
+                
+                {/* Controls: Add Button & Search Bar */}
+                <div className="flex flex-col md:flex-row gap-3">
+                  <button onClick={() => { setEditingProduct(null); setIsProductModalOpen(true); }} className="flex-1 bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 hover:bg-blue-700 transition-colors">
+                    <PlusCircle size={20} /> Add New Product
+                  </button>
                 </div>
+
+                <div className="relative">
+                  <Search className="absolute left-4 top-4 text-gray-400" size={20} />
+                  <input 
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by product name or category..."
+                    className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500 outline-none font-medium"
+                  />
+                </div>
+
+                {/* Search Results / Categorized List */}
+                {sortedCategoryNames.length === 0 ? (
+                  <div className="text-center p-10 text-gray-500 bg-white rounded-2xl shadow-sm">No products found matching your search.</div>
+                ) : (
+                  <div className="space-y-4">
+                    {sortedCategoryNames.map(catName => {
+                      const catProducts = groupedInventory[catName];
+                      const isExpanded = expandedCategories[catName] !== false; // Default to expanded
+
+                      return (
+                        <div key={catName} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                          {/* Category Header - Clickable to Expand/Collapse */}
+                          <button 
+                            onClick={() => toggleCategory(catName)}
+                            className="w-full flex justify-between items-center p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
+                          >
+                            <div className="flex items-center gap-2">
+                              {isExpanded ? <ChevronDown size={18} className="text-gray-500" /> : <ChevronRight size={18} className="text-gray-500" />}
+                              <h3 className="font-black text-gray-900 text-lg">{catName}</h3>
+                              <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                                {catProducts.length}
+                              </span>
+                            </div>
+                          </button>
+
+                          {/* Category Products */}
+                          {isExpanded && (
+                            <div className="divide-y divide-gray-50">
+                              {catProducts.map(product => (
+                                <div key={product.id} className="p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+                                  <img src={product.image_url} className="w-16 h-16 rounded-xl object-cover border bg-white" />
+                                  <div className="flex-1">
+                                    <p className="font-bold text-sm text-gray-900 line-clamp-1">{product.name}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <p className="text-sm font-black text-gray-800">₦{product.price.toFixed(2)}</p>
+                                      {product.discount_price && (
+                                        <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+                                          Sale: ₦{product.discount_price.toFixed(2)}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button onClick={() => { setEditingProduct(product); setIsProductModalOpen(true); }} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100"><Pencil size={18} /></button>
+                                    <button onClick={() => handleDeleteProduct(product.id)} className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100"><Trash2 size={18} /></button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -168,28 +240,24 @@ export default function AdminDashboard() {
               <div className="space-y-6">
                 <div className="bg-white p-5 rounded-2xl shadow-sm border">
                   <h3 className="font-bold mb-3">Add New Category</h3>
-                  <input value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="e.g. Anti Malaria" className="w-full p-3 bg-gray-50 border rounded-xl mb-3" />
-                  <select value={newCatType} onChange={e => setNewCatType(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl mb-3">
+                  <input value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="e.g. Anti Malaria" className="w-full p-3 bg-gray-50 border rounded-xl mb-3 outline-none focus:ring-2 focus:ring-blue-500" />
+                  <select value={newCatType} onChange={e => setNewCatType(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl mb-3 outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="pharmaceutical">Pharmaceutical</option>
                     <option value="provision">Provision</option>
                     <option value="cosmetics">Cosmetics</option>
                   </select>
-                  <button 
-                    onClick={handleAddCategory} 
-                    disabled={isAddingCategory}
-                    className="w-full bg-gray-900 text-white font-bold py-3 rounded-xl flex justify-center items-center"
-                  >
+                  <button onClick={handleAddCategory} disabled={isAddingCategory} className="w-full bg-gray-900 text-white font-bold py-3 rounded-xl flex justify-center items-center hover:bg-gray-800">
                     {isAddingCategory ? <Loader2 className="animate-spin" /> : 'Add Category'}
                   </button>
                 </div>
-                <div className="bg-white rounded-2xl shadow-sm border overflow-hidden divide-y">
+                <div className="bg-white rounded-2xl shadow-sm border overflow-hidden divide-y divide-gray-100">
                   {categories.map(cat => (
                     <div key={cat.id} className="p-4 flex justify-between items-center">
                       <div>
-                        <p className="font-bold">{cat.name}</p>
-                        <span className="text-[10px] uppercase font-bold bg-gray-100 px-2 py-1 rounded-md">{cat.type}</span>
+                        <p className="font-bold text-gray-900">{cat.name}</p>
+                        <span className="text-[10px] uppercase font-bold bg-gray-100 px-2 py-1 rounded-md mt-1 inline-block">{cat.type}</span>
                       </div>
-                      <button onClick={() => handleDeleteCategory(cat.id)} className="p-2 text-red-600 bg-red-50 rounded-lg"><Trash2 size={18} /></button>
+                      <button onClick={() => handleDeleteCategory(cat.id)} className="p-2.5 text-red-600 bg-red-50 rounded-xl hover:bg-red-100"><Trash2 size={18} /></button>
                     </div>
                   ))}
                 </div>
@@ -199,7 +267,7 @@ export default function AdminDashboard() {
             {/* BANNERS TAB */}
             {activeTab === 'banners' && (
               <div className="space-y-4">
-                <button onClick={() => setIsBannerModalOpen(true)} className="w-full bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg flex justify-center gap-2">
+                <button onClick={() => setIsBannerModalOpen(true)} className="w-full bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg flex justify-center gap-2 hover:bg-emerald-700">
                   <PlusCircle size={20} /> Add New Advert Banner
                 </button>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -207,7 +275,7 @@ export default function AdminDashboard() {
                     <div key={banner.id} className="bg-white rounded-2xl shadow-sm border overflow-hidden relative group">
                       <img src={banner.image_url} className="w-full h-40 object-cover" />
                       <div className="p-4">
-                        <p className="font-black text-lg">{banner.title}</p>
+                        <p className="font-black text-lg text-gray-900">{banner.title}</p>
                         <p className="text-gray-500 text-sm">{banner.subtitle}</p>
                         <div className="flex justify-between items-center mt-2">
                           <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-md uppercase">{banner.type}</span>
