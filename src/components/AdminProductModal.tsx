@@ -14,16 +14,22 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // Populate form if editing
+  // This ensures the form resets properly every time you open it
   useEffect(() => {
-    if (productToEdit) {
-      setName(productToEdit.name || '')
-      setPrice(productToEdit.price?.toString() || '')
-      setDiscountPrice(productToEdit.discount_price?.toString() || '')
-      setCategoryId(productToEdit.category_id || '')
-      setPreviewImage(productToEdit.image_url || '')
-    } else {
-      setName(''); setPrice(''); setDiscountPrice(''); setCategoryId(categories[0]?.id || ''); setPreviewImage(''); setImageFile(null);
+    if (isOpen) {
+      if (productToEdit) {
+        setName(productToEdit.name || '')
+        setPrice(productToEdit.price?.toString() || '')
+        setDiscountPrice(productToEdit.discount_price?.toString() || '')
+        setCategoryId(productToEdit.category_id || '')
+        setPreviewImage(productToEdit.image_url || '')
+      } else {
+        setName(''); setPrice(''); setDiscountPrice(''); 
+        setCategoryId(categories[0]?.id || ''); 
+        setPreviewImage(''); setImageFile(null);
+      }
+      setError('')
+      setIsSaving(false)
     }
   }, [productToEdit, isOpen, categories])
 
@@ -31,7 +37,7 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
     const file = e.target.files?.[0]
     if (file) {
       setImageFile(file)
-      setPreviewImage(URL.createObjectURL(file)) // Live preview!
+      setPreviewImage(URL.createObjectURL(file)) // Shows the new image instantly
     }
   }
 
@@ -45,10 +51,11 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
     try {
       let finalImageUrl = previewImage
 
-      // 1. Upload new image if selected
+      // 1. Upload new image if one was selected
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop()
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+        // Create a unique filename so images never overwrite each other
+        const fileName = `product-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
         
         const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, imageFile)
         if (uploadError) throw uploadError
@@ -57,7 +64,7 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
         finalImageUrl = publicUrl
       }
 
-      // 2. Prepare data
+      // 2. Prepare data for the specific product
       const productData = {
         name,
         price: parseFloat(price),
@@ -66,7 +73,7 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
         image_url: finalImageUrl
       }
 
-      // 3. Insert or Update
+      // 3. Insert new or Update existing product
       if (productToEdit) {
         const { error } = await supabase.from('products').update(productData).eq('id', productToEdit.id)
         if (error) throw error
@@ -75,8 +82,8 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
         if (error) throw error
       }
 
-      onSaveSuccess()
-      onClose()
+      onSaveSuccess() // Refresh the list in the admin dashboard
+      onClose() // Close the modal
     } catch (err: any) {
       setError(err.message || 'Something went wrong.')
     } finally {
@@ -101,7 +108,7 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
             <div className="p-5 overflow-y-auto space-y-4 pb-32">
               {error && <div className="bg-red-50 text-red-600 text-sm p-3 rounded-xl font-bold text-center">{error}</div>}
 
-              {/* Image Upload with Preview */}
+              {/* Image Upload with Live Preview */}
               <div>
                 <label className="text-xs font-bold text-gray-700 mb-1 block">Product Image</label>
                 <div className="border-2 border-dashed border-gray-300 rounded-2xl p-4 flex flex-col items-center justify-center relative overflow-hidden h-48 bg-gray-50">
@@ -125,11 +132,11 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-gray-700 mb-1 block">Original Price (₦)</label>
-                  <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl outline-none" placeholder="10.00" />
+                  <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl outline-none" placeholder="1000" />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-700 mb-1 block">Discount (₦) (Opt)</label>
-                  <input type="number" value={discountPrice} onChange={e => setDiscountPrice(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl outline-none" placeholder="8.00" />
+                  <input type="number" value={discountPrice} onChange={e => setDiscountPrice(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl outline-none" placeholder="800" />
                 </div>
               </div>
 

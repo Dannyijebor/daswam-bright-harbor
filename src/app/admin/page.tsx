@@ -77,9 +77,14 @@ export default function AdminDashboard() {
 
   const handleAddCategory = async () => {
     if (!newCatName) return
-    await supabase.from('categories').insert({ name: newCatName, type: newCatType })
-    setNewCatName('')
-    fetchData()
+    const { error } = await supabase.from('categories').insert({ name: newCatName, type: newCatType })
+    if (error) {
+      alert("Error: " + error.message)
+    } else {
+      setNewCatName('')
+      fetchData()
+    }
+  }
   }
 
   const handleDeleteCategory = async (id: string) => {
