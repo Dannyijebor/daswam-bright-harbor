@@ -14,8 +14,9 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
   
-  // Search & Grouping State
+  // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All Categories')
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({})
 
   // Modals
@@ -111,10 +112,17 @@ export default function AdminDashboard() {
   }
 
   // --- FILTERING AND GROUPING LOGIC ---
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (p.categories?.name || 'Uncategorized').toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = 
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.categories?.name || 'Uncategorized').toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = 
+      selectedCategoryFilter === 'All Categories' || 
+      (p.categories?.name || 'Uncategorized') === selectedCategoryFilter;
+
+    return matchesSearch && matchesCategory;
+  })
 
   const groupedInventory = filteredProducts.reduce((acc: Record<string, any[]>, product) => {
     const catName = product.categories?.name || 'Uncategorized'
@@ -159,29 +167,44 @@ export default function AdminDashboard() {
             {activeTab === 'inventory' && (
               <div className="space-y-4">
                 
-                {/* Controls: Add Button & Search Bar */}
-                <div className="flex flex-col md:flex-row gap-3">
-                  <button onClick={() => { setEditingProduct(null); setIsProductModalOpen(true); }} className="flex-1 bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 hover:bg-blue-700 transition-colors">
-                    <PlusCircle size={20} /> Add New Product
-                  </button>
-                </div>
+                <button onClick={() => { setEditingProduct(null); setIsProductModalOpen(true); }} className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 hover:bg-blue-700 transition-colors mb-2">
+                  <PlusCircle size={20} /> Add New Product
+                </button>
 
-                <div className="relative">
-                  <Search className="absolute left-4 top-4 text-gray-400" size={20} />
-                  <input 
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by product name or category..."
-                    className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500 outline-none font-medium"
-                  />
+                {/* Search & Category Filter Controls */}
+                <div className="flex flex-col gap-3 bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
+                  <div className="relative">
+                    <Search className="absolute left-4 top-3.5 text-gray-400" size={20} />
+                    <input 
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search products..."
+                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-medium"
+                    />
+                  </div>
+                  
+                  <div className="relative">
+                    <select 
+                      value={selectedCategoryFilter}
+                      onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-700 appearance-none cursor-pointer"
+                    >
+                      <option value="All Categories">View All Categories</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.name}>{c.name}</option>
+                      ))}
+                      <option value="Uncategorized">Uncategorized</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-3.5 text-gray-500 pointer-events-none" size={20} />
+                  </div>
                 </div>
 
                 {/* Search Results / Categorized List */}
                 {sortedCategoryNames.length === 0 ? (
-                  <div className="text-center p-10 text-gray-500 bg-white rounded-2xl shadow-sm">No products found matching your search.</div>
+                  <div className="text-center p-10 text-gray-500 bg-white rounded-2xl shadow-sm font-medium">No products found.</div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-4 mt-2">
                     {sortedCategoryNames.map(catName => {
                       const catProducts = groupedInventory[catName];
                       const isExpanded = expandedCategories[catName] !== false; // Default to expanded
