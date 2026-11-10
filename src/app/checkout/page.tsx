@@ -14,9 +14,10 @@ export default function CheckoutPage() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState('')
 
-  // Check if any item requires a prescription
   const requiresPrescription = cart.some(item => item.is_prescription_required)
-  const deliveryFee = cartTotal > 50 ? 0 : 5.00 // Free delivery over $50
+  
+  // Naira Delivery Logic: Free over ₦10,000, otherwise ₦500
+  const deliveryFee = cartTotal > 10000 ? 0 : 500.00 
   const finalTotal = cartTotal + deliveryFee
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -30,7 +31,7 @@ export default function CheckoutPage() {
       const result = await placeOrder(formData, cart, finalTotal)
       if (result.success) {
         setIsSuccess(true)
-        clearCart() // Empty the cart
+        clearCart()
       } else {
         setError(result.error || 'Something went wrong.')
       }
@@ -41,7 +42,6 @@ export default function CheckoutPage() {
     }
   }
 
-  // 1. Empty Cart State
   if (cart.length === 0 && !isSuccess) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#fafbfc]">
@@ -55,7 +55,6 @@ export default function CheckoutPage() {
     )
   }
 
-  // 2. Success State
   if (isSuccess) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#fafbfc]">
@@ -75,17 +74,15 @@ export default function CheckoutPage() {
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           className="text-gray-500 mb-8 text-center max-w-[300px]"
         >
-          Your order is being prepared. Our pharmacist will call you shortly to confirm the delivery details.
+          Your order is being prepared. Our team will call you shortly to confirm the delivery details.
         </motion.p>
         <Link href="/" className="bg-blue-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg">Back to Home</Link>
       </div>
     )
   }
 
-  // 3. Checkout Form
   return (
     <main className="min-h-screen bg-[#fafbfc] pb-32">
-      {/* Header */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 p-4 flex items-center gap-4">
         <button onClick={() => router.back()} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
           <ArrowLeft size={20} className="text-gray-800" />
@@ -95,7 +92,6 @@ export default function CheckoutPage() {
 
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-4 space-y-6">
         
-        {/* Prescription Warning */}
         {requiresPrescription && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-orange-50 border border-orange-200 p-4 rounded-2xl flex items-start gap-3">
             <ShieldCheck className="text-orange-500 shrink-0 mt-0.5" size={20} />
@@ -106,7 +102,6 @@ export default function CheckoutPage() {
           </motion.div>
         )}
 
-        {/* Delivery Details Form */}
         <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100">
           <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
             <Truck size={18} className="text-blue-600" /> Delivery Details
@@ -127,7 +122,6 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* Payment Method */}
         <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100">
           <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
             <CreditCard size={18} className="text-blue-600" /> Payment Method
@@ -153,7 +147,6 @@ export default function CheckoutPage() {
         {error && <div className="text-red-500 text-sm font-bold text-center bg-red-50 p-3 rounded-xl">{error}</div>}
       </form>
 
-      {/* Sticky Bottom Summary */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 pb-8 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50">
         <div className="max-w-2xl mx-auto">
           <div className="flex justify-between text-sm mb-2 text-gray-500">
@@ -162,7 +155,7 @@ export default function CheckoutPage() {
           </div>
           <div className="flex justify-between text-sm mb-4 text-gray-500">
             <span>Delivery Fee</span>
-            <span className="font-medium text-gray-800">{deliveryFee === 0 ? 'FREE' : `$₦{deliveryFee.toFixed(2)}`}</span>
+            <span className="font-medium text-gray-800">{deliveryFee === 0 ? 'FREE' : `₦${deliveryFee.toFixed(2)}`}</span>
           </div>
           <div className="flex justify-between items-center mb-4 border-t pt-3">
             <span className="font-bold text-gray-900">Total</span>
