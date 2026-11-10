@@ -157,7 +157,7 @@ export default function AdminDashboard() {
                   <input value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="e.g. Baby Care" className="w-full p-3 bg-gray-50 border rounded-xl mb-3" />
                   <select value={newCatType} onChange={e => setNewCatType(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl mb-3">
                     <option value="pharmaceutical">Pharmaceutical</option>
-                    <option value="provision">Provision</option>
+                    <option value="provision">Provision</option><option value="cosmetics">Cosmetics</option>
                   </select>
                   <button onClick={handleAddCategory} className="w-full bg-gray-900 text-white font-bold py-3 rounded-xl">Add Category</button>
                 </div>
