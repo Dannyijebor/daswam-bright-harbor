@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Image as ImageIcon, Loader2, Save } from 'lucide-react'
+import { X, Image as ImageIcon, Loader2, Save, Camera, ImagePlus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export default function AdminProductModal({ isOpen, onClose, productToEdit, categories, onSaveSuccess }: any) {
@@ -14,7 +14,7 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // This ensures the form resets properly every time you open it
+  // Reset or populate form when opened
   useEffect(() => {
     if (isOpen) {
       if (productToEdit) {
@@ -23,6 +23,7 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
         setDiscountPrice(productToEdit.discount_price?.toString() || '')
         setCategoryId(productToEdit.category_id || '')
         setPreviewImage(productToEdit.image_url || '')
+        setImageFile(null)
       } else {
         setName(''); setPrice(''); setDiscountPrice(''); 
         setCategoryId(categories[0]?.id || ''); 
@@ -33,17 +34,18 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
     }
   }, [productToEdit, isOpen, categories])
 
+  // Handle file selection from EITHER camera or gallery
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       setImageFile(file)
-      setPreviewImage(URL.createObjectURL(file)) // Shows the new image instantly
+      setPreviewImage(URL.createObjectURL(file)) // Live preview instantly
     }
   }
 
   const handleSave = async () => {
     if (!name || !price || !categoryId) return setError('Please fill in Name, Price, and Category.')
-    if (!productToEdit && !imageFile && !previewImage) return setError('Please select an image.')
+    if (!productToEdit && !imageFile && !previewImage) return setError('Please provide an image.')
 
     setIsSaving(true)
     setError('')
@@ -51,10 +53,9 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
     try {
       let finalImageUrl = previewImage
 
-      // 1. Upload new image if one was selected
+      // 1. Upload new image if selected (from camera or gallery)
       if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop()
-        // Create a unique filename so images never overwrite each other
+        const fileExt = imageFile.name.split('.').pop() || 'jpg'
         const fileName = `product-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
         
         const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, imageFile)
@@ -64,7 +65,7 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
         finalImageUrl = publicUrl
       }
 
-      // 2. Prepare data for the specific product
+      // 2. Prepare data
       const productData = {
         name,
         price: parseFloat(price),
@@ -73,7 +74,7 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
         image_url: finalImageUrl
       }
 
-      // 3. Insert new or Update existing product
+      // 3. Insert or Update
       if (productToEdit) {
         const { error } = await supabase.from('products').update(productData).eq('id', productToEdit.id)
         if (error) throw error
@@ -82,10 +83,10 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
         if (error) throw error
       }
 
-      onSaveSuccess() // Refresh the list in the admin dashboard
-      onClose() // Close the modal
+      onSaveSuccess()
+      onClose()
     } catch (err: any) {
-      setError(err.message || 'Something went wrong.')
+      setError(err.message || 'Something went wrong while saving.')
     } finally {
       setIsSaving(false)
     }
@@ -108,19 +109,50 @@ export default function AdminProductModal({ isOpen, onClose, productToEdit, cate
             <div className="p-5 overflow-y-auto space-y-4 pb-32">
               {error && <div className="bg-red-50 text-red-600 text-sm p-3 rounded-xl font-bold text-center">{error}</div>}
 
-              {/* Image Upload with Live Preview */}
+              {/* Image Upload Section */}
               <div>
-                <label className="text-xs font-bold text-gray-700 mb-1 block">Product Image</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-2xl p-4 flex flex-col items-center justify-center relative overflow-hidden h-48 bg-gray-50">
-                  <input type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                <label className="text-xs font-bold text-gray-700 mb-2 block">Product Image</label>
+                
+                {/* Preview Area */}
+                <div className="border-2 border-dashed border-gray-300 rounded-2xl p-4 flex flex-col items-center justify-center relative overflow-hidden h-48 bg-gray-50 mb-3">
                   {previewImage ? (
                     <img src={previewImage} className="w-full h-full object-contain mix-blend-multiply" />
                   ) : (
                     <>
                       <ImageIcon className="text-gray-400 mb-2" size={32} />
-                      <p className="text-sm font-medium text-gray-500">Tap to select an image</p>
+                      <p className="text-sm font-medium text-gray-500">No image selected</p>
                     </>
                   )}
+                </div>
+
+                {/* Two distinct buttons for Camera vs Gallery */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Camera Button */}
+                  <div className="relative">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      capture="environment" 
+                      onChange={handleImageChange} 
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                    />
+                    <button className="w-full bg-blue-50 text-blue-700 font-bold py-3 rounded-xl border border-blue-200 flex items-center justify-center gap-2 pointer-events-none">
+                      <Camera size={18} /> Take Photo
+                    </button>
+                  </div>
+
+                  {/* Gallery Button */}
+                  <div className="relative">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleImageChange} 
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                    />
+                    <button className="w-full bg-gray-100 text-gray-700 font-bold py-3 rounded-xl border border-gray-200 flex items-center justify-center gap-2 pointer-events-none">
+                      <ImagePlus size={18} /> Gallery
+                    </button>
+                  </div>
                 </div>
               </div>
 
