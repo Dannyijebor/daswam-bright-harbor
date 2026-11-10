@@ -22,6 +22,7 @@ export default function AdminDashboard() {
   // New Category State
   const [newCatName, setNewCatName] = useState('')
   const [newCatType, setNewCatType] = useState('pharmaceutical')
+  const [isAddingCategory, setIsAddingCategory] = useState(false)
   
   const router = useRouter()
 
@@ -42,17 +43,14 @@ export default function AdminDashboard() {
     setIsLoading(true)
     setErrorMsg('')
     try {
-      // Fetch Products
       const { data: prods, error: pError } = await supabase.from('products').select('*, categories(name)').order('name')
       if (pError) throw pError
       setProducts(prods || [])
 
-      // Fetch Categories
       const { data: cats, error: cError } = await supabase.from('categories').select('*').order('name')
       if (cError) throw cError
       setCategories(cats || [])
 
-      // Fetch Banners
       const { data: bns, error: bError } = await supabase.from('banners').select('*').order('created_at', { ascending: false })
       if (bError) throw bError
       setBanners(bns || [])
@@ -75,20 +73,31 @@ export default function AdminDashboard() {
     fetchData()
   }
 
+  // THE FIX IS HERE: Robust Category Adding
   const handleAddCategory = async () => {
-    if (!newCatName) return
-    const { error } = await supabase.from('categories').insert({ name: newCatName, type: newCatType })
+    if (!newCatName.trim()) return alert('Please enter a category name')
+    
+    setIsAddingCategory(true)
+    
+    // 1. Save to Database
+    const { error } = await supabase
+      .from('categories')
+      .insert({ name: newCatName.trim(), type: newCatType })
+    
+    setIsAddingCategory(false)
+
+    // 2. Handle Result
     if (error) {
-      alert("Error: " + error.message)
+      alert("Database Error: " + error.message)
     } else {
-      setNewCatName('')
-      fetchData()
+      alert(`Success! "${newCatName}" has been added.`)
+      setNewCatName('') // Clear the input box
+      fetchData() // Instantly refresh the list and dropdowns
     }
-  }
   }
 
   const handleDeleteCategory = async (id: string) => {
-    if (!confirm('Delete category? Products in this category will be uncategorized.')) return
+    if (!confirm('Delete category? Products in this category will become uncategorized.')) return
     await supabase.from('categories').delete().eq('id', id)
     fetchData()
   }
@@ -142,7 +151,7 @@ export default function AdminDashboard() {
                       <div className="flex-1">
                         <p className="font-bold text-sm">{product.name}</p>
                         <p className="text-[10px] font-bold text-blue-600 uppercase">{product.categories?.name || 'Uncategorized'}</p>
-                        <p className="text-sm font-black mt-1">${product.price.toFixed(2)}</p>
+                        <p className="text-sm font-black mt-1">₦{product.price.toFixed(2)}</p>
                       </div>
                       <div className="flex gap-2">
                         <button onClick={() => { setEditingProduct(product); setIsProductModalOpen(true); }} className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Pencil size={18} /></button>
@@ -159,12 +168,19 @@ export default function AdminDashboard() {
               <div className="space-y-6">
                 <div className="bg-white p-5 rounded-2xl shadow-sm border">
                   <h3 className="font-bold mb-3">Add New Category</h3>
-                  <input value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="e.g. Baby Care" className="w-full p-3 bg-gray-50 border rounded-xl mb-3" />
+                  <input value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="e.g. Anti Malaria" className="w-full p-3 bg-gray-50 border rounded-xl mb-3" />
                   <select value={newCatType} onChange={e => setNewCatType(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl mb-3">
                     <option value="pharmaceutical">Pharmaceutical</option>
-                    <option value="provision">Provision</option><option value="cosmetics">Cosmetics</option>
+                    <option value="provision">Provision</option>
+                    <option value="cosmetics">Cosmetics</option>
                   </select>
-                  <button onClick={handleAddCategory} className="w-full bg-gray-900 text-white font-bold py-3 rounded-xl">Add Category</button>
+                  <button 
+                    onClick={handleAddCategory} 
+                    disabled={isAddingCategory}
+                    className="w-full bg-gray-900 text-white font-bold py-3 rounded-xl flex justify-center items-center"
+                  >
+                    {isAddingCategory ? <Loader2 className="animate-spin" /> : 'Add Category'}
+                  </button>
                 </div>
                 <div className="bg-white rounded-2xl shadow-sm border overflow-hidden divide-y">
                   {categories.map(cat => (
